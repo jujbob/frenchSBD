@@ -3,7 +3,13 @@
 
 # # Sentence Boundary detection with NER features
 
-# In[ ]:
+# In[1]:
+
+
+import os
+
+
+# In[2]:
 
 
 import torch
@@ -14,14 +20,15 @@ from tqdm import tqdm
 import csv
 
 
-# In[ ]:
+# In[3]:
 
 
 train_file = './data/train.tsv'
-test_file = './data/test.tsv'
+#test_file = './data/test.tsv'
+test_file = './data_v1/europarl-sbd-eval.tsv'
 
 
-# In[ ]:
+# In[4]:
 
 
 train_df = pd.read_csv(train_file, delimiter='\t', engine='python', encoding='UTF-8', error_bad_lines=False, header=None, quoting=csv.QUOTE_NONE)
@@ -30,14 +37,14 @@ train_df.head()
 #train_df.head()
 
 
-# In[ ]:
+# In[5]:
 
 
 test_df = pd.read_csv(test_file, delimiter='\t', engine='python', encoding='UTF-8', error_bad_lines=False, header=None, quoting=csv.QUOTE_NONE)
 test_df.head()
 
 
-# In[ ]:
+# In[6]:
 
 
 def set_sentence_num(df): 
@@ -54,21 +61,21 @@ def set_sentence_num(df):
     return df
 
 
-# In[ ]:
+# In[7]:
 
 
 train_df = set_sentence_num(train_df)
 test_df = set_sentence_num(test_df)
 
 
-# In[ ]:
+# In[8]:
 
 
 train_df = train_df[train_df['sent_num'] < 10000]
 test_df = test_df[test_df['sent_num'] < 100000]
 
 
-# In[ ]:
+# In[9]:
 
 
 sentence = train_df[train_df['sent_num']==2]
@@ -76,7 +83,7 @@ token_list =  ' '.join([token for token in sentence[0]])
 print(token_list)
 
 
-# In[ ]:
+# In[10]:
 
 
 class FSBDataset():
@@ -100,6 +107,7 @@ class FSBDataset():
                                             None,
                                             add_special_tokens=True,
                                             max_length=self.max_length,
+                                            truncation=True,
                                             pad_to_max_length=True)
         
         ids = encoded['input_ids']
@@ -108,7 +116,7 @@ class FSBDataset():
         bpe_head_mask = [0]; upos_ids = [-1] # --> CLS token
         
         for word, target in zip(token_list, target_list):
-            bpe_len = len(self.tokenizer.tokenize(word, add_special_token=False))
+            bpe_len = len(self.tokenizer.tokenize(word))
             head_mask = [1] + [0]*(bpe_len-1)
             bpe_head_mask.extend(head_mask)
             upos_mask = [self.idxtob.get(target,0)] + [-1]*(bpe_len-1)
@@ -133,7 +141,7 @@ class FSBDataset():
         
 
 
-# In[ ]:
+# In[11]:
 
 
 class XLMRobertaBaseline(torch.nn.Module):
@@ -157,18 +165,18 @@ class XLMRobertaBaseline(torch.nn.Module):
         
 
 
-# In[ ]:
+# In[12]:
 
 
 MAX_LEN = 640
 tokenizer = transformers.XLMRobertaTokenizer.from_pretrained('xlm-roberta-base')
 train_dataset = FSBDataset(train_df, tokenizer, MAX_LEN)
-train_loader = torch.utils.data.DataLoader(train_dataset, shuffle=True, num_workers=4, batch_size=10)
+train_loader = torch.utils.data.DataLoader(train_dataset, shuffle=True, num_workers=4, batch_size=6)
 test_dataset = FSBDataset(test_df, tokenizer, MAX_LEN)
 test_loader = torch.utils.data.DataLoader(test_dataset, shuffle=False, num_workers=4, batch_size=4)
 
 
-# In[ ]:
+# In[13]:
 
 
 model = XLMRobertaBaseline()
@@ -176,14 +184,14 @@ model = torch.nn.DataParallel(model)
 model = model.cuda()
 
 
-# In[ ]:
+# In[14]:
 
 
 optimizer = transformers.AdamW(params=model.parameters(), lr=0.000005)
 loss_fn = torch.nn.CrossEntropyLoss(ignore_index=-1)
 
 
-# In[ ]:
+# In[15]:
 
 
 def f1_score(total_pred, total_targ):
@@ -267,7 +275,7 @@ def f1_score(total_pred, total_targ):
     
 
 
-# In[ ]:
+# In[16]:
 
 
 def train_loop_fn(train_loader, model, optimizer, DEVICE=None, scheduler=None):
