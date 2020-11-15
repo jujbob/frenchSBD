@@ -45,3 +45,4 @@ This is a list of packages that required to run the codes.
   ```
   
 ## 3. Performance
+![initial](https://user-images.githubusercontent.com/4470398/99162632-2f9c5a00-2743-11eb-845e-b0045f8be002.png)
