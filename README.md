@@ -1,5 +1,5 @@
 # [Real-world Sentence Boundary DetectionUsing Multitask Learning: A Case Study on French]
-This repository is a submission "Real-world Sentence Boundary DetectionUsing Multitask Learning: A Case Study on French". You can check the data in the "data" folder both for training and testing. 
+This repository is for "Real-world Sentence Boundary DetectionUsing Multitask Learning: A Case Study on French" (submitted to NLE, CUP). You can check the data in the "data" folder both for training and testing. 
 We serve around 50 percent of our training data because of license issues. You can test three different models, namely 'Baseline', 'multi-task with XLM-Roberta', and 'multi-task with CamemBERT' models.
 
 
